@@ -1,0 +1,63 @@
+Code for Arduino
+// Initialize variables 
+int i = 0; 
+double voltavg; 
+
+// Setup routine runs once when Arduino is powered on or reset 
+void setup() { 
+  // Initialize serial communication at 9600 bits per second 
+  Serial.begin(9600); 
+} 
+
+// Loop routine runs repeatedly as long as Arduino is powered on 
+void loop() { 
+  // Read the analog input on pin A0 (solar current) 
+  float sensorValue = analogRead(A0); 
+  // Read the analog input on pin A2 (wind current) 
+  float sensorValue1 = analogRead(A2); 
+
+  // Convert sensor values to voltage (0-5V range) 
+  float curpvolt = (sensorValue * 5) / 1024;    // Current voltage (solar) 
+  float curwvolt = (sensorValue1 * 5) / 1024;   // Current voltage (wind) 
+
+  // Calculate current based on voltage difference from 2.5V reference 
+  float curp = (curpvolt - 2.5);    // Current (solar) 
+  float curvw = (curwvolt - 2.5);   // Current (wind) 
+
+  // Calculate actual current values in milliamps (mA) 
+  float curpv = (curp * 1000) / 66;       // Current (solar) 
+  float curw = (curvw * 1000) / 100;      // Current (wind) 
+
+  // Read analog input on pin A5 (solar voltage) 
+  float sensorValue2 = analogRead(A5); 
+  // Convert voltage to actual voltage value (0-5V range) 
+  float voltk = (sensorValue2 * 5) / 1023; 
+  // Calculate actual voltage value (solar) 
+  float actvoltp = voltk * 47.8; 
+
+  // Read analog input on pin A4 (wind voltage) 
+  int sensorValue3 = analogRead(A4); 
+  // Convert voltage to actual voltage value (0-5V range) 
+  float voltk1 = (sensorValue3 * 5) / 1023; 
+  // Calculate actual voltage value (wind) 
+  float actvoltw = voltk1 * 23.25; 
+
+  // Create a JSON document to store sensor data 
+  StaticJsonDocument<200> jsonDoc; 
+
+  // Populate JSON document with sensor data 
+  jsonDoc["PV Volt"] = actvoltp;      // Voltage (solar) 
+  jsonDoc["Wind Volt"] = actvoltw;    // Voltage (wind) 
+  jsonDoc["PV Current"] = curpv;      // Current (solar) 
+  jsonDoc["Wind Current"] = curw;     // Current (wind) 
+
+  // Serialize the JSON document into a string 
+  String jsonString; 
+  serializeJson(jsonDoc, jsonString); 
+
+  // Send JSON string over serial to ESP8266 
+  Serial.println(jsonString); 
+
+  // Delay for 5 seconds before the next iteration 
+  delay(5000); 
+}
